@@ -8,7 +8,19 @@ It runs `tmux ls` on whatever host the workspace lives on. Over Remote-SSH that
 is the remote box (the manifest sets `"extensionKind": ["workspace"]`), so it
 sees your remote tmux sessions, not your laptop's.
 
-## Install (simplest — drop the folder in, no packaging)
+## Install (recommended — from the Marketplace)
+
+Search **"tmux Auto Reattach"** in the Extensions view, or install directly:
+
+- Marketplace page: https://marketplace.visualstudio.com/items?itemName=ideonate.vscode-tmux-auto-reattach
+- Command Palette -> "Extensions: Install Extensions", then search the name, or
+- from a terminal: `code --install-extension ideonate.vscode-tmux-auto-reattach`
+
+Over Remote-SSH, install it **while connected to the remote** (the Extensions
+view's "Install in SSH: host" button, or run the `code` command on the remote)
+so it lands on the remote host where your tmux sessions live.
+
+## Install (from source — drop the folder in, no packaging)
 
 Over Remote-SSH the extension must live on the remote host. Copy this folder
 into the remote VSCode-server extensions directory and reload:
@@ -20,11 +32,11 @@ Then in VSCode: Command Palette -> "Developer: Reload Window".
 
 (For a non-remote / local install, the directory is `~/.vscode/extensions/`.)
 
-## Install (cleaner — build a .vsix)
+## Install (from source — build a .vsix)
 
     npm install -g @vscode/vsce
     cd vscode-tmux-auto-reattach
-    vsce package --allow-missing-repository
+    vsce package
 
 Then, **while connected to the remote**, Command Palette ->
 "Extensions: Install from VSIX..." and pick the generated file. Installing from
