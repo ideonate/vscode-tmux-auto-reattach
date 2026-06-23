@@ -105,6 +105,29 @@ Two gotchas:
 - With `mouse on`, click-drag selection goes to tmux instead of VSCode. Hold
   **Shift** while selecting or scrolling to use VSCode's native behaviour.
 
+## Cursor keys & backspace in tmux
+
+Inside tmux the `TERM` value comes from tmux's `default-terminal` setting, not
+from the VSCode terminal you launched it in. If that points at a terminfo entry
+the host doesn't actually have — or the old `screen` default — the shell's line
+editor can't map the keys: the up/down arrows stop recalling history and
+backspace prints `^H` instead of erasing.
+
+Fix it in `~/.tmux.conf` (on the **remote** host if you use Remote-SSH):
+
+    set -g default-terminal "tmux-256color"
+
+Three gotchas:
+
+- The entry must exist on that host. Check with `infocmp tmux-256color` — it
+  should print a definition. If it errors, use `set -g default-terminal
+  "screen-256color"` (always present) or update ncurses on the remote.
+- Like `history-limit`, this only takes effect for sessions started *after* it's
+  set. Start a new session (or `tmux kill-server`) — the sessions this extension
+  reattaches to keep whatever `TERM` they were born with.
+- For *modified* arrows (Ctrl/Shift+Up, etc.) on tmux older than 3.2, also add
+  `set -g xterm-keys on`; newer tmux does this automatically.
+
 ## Switching to zellij
 
 Set the two commands above to the zellij variants. The `-ns` flags on
