@@ -60,6 +60,35 @@ Command Palette -> "tmux Auto Reattach: Open One Terminal Per Session".
   `{session}` is replaced with the name. Default: `tmux attach -t {session}`.
   Add `-d` (`tmux attach -d -t {session}`) to detach other clients first.
   For zellij: `zellij attach {session}`
+- `tmuxAutoReattach.liveTitles` (default false) — see below.
+- `tmuxAutoReattach.titleCommand` — the tmux command `liveTitles` runs to turn
+  titles on (see below).
+
+## Live tab titles (show the running program)
+
+By default each tab gets a fixed label — the session name — and never changes.
+A normal VSCode terminal instead shows what's running (`bash`, `python`, …)
+because shell integration follows the foreground process. We can't get that for
+free here: we attach to tmux, so from VSCode's point of view the process is
+always `tmux`, and your program runs under the tmux *server*, in a different
+process tree VSCode can't see.
+
+The one thing that *can* see inside the session is tmux itself. Turn on
+`tmuxAutoReattach.liveTitles` and the extension opens terminals without a pinned
+name, then runs `titleCommand` to make tmux push the tab title:
+
+    tmux set -g set-titles on \; set -g set-titles-string '#{session_name}: #{pane_current_command}'
+
+You'll get live labels like `mywork: python` that update as the pane's command
+changes. Notes:
+
+- This is **tmux-only**; leave it off for zellij.
+- `set-titles` is a *global* tmux option, so it affects every session on the
+  server, not just the ones VSCode opened. If you already set it in
+  `~/.tmux.conf`, clear `titleCommand` so the extension doesn't re-set it.
+- With no pinned tab name, before tmux emits a title (or if `titleCommand` is
+  empty and you haven't configured `set-titles`) the tab just shows the default
+  shell name.
 
 ## Making new terminals (the `+` button) open tmux too
 

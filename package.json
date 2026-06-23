@@ -58,6 +58,16 @@
           "type": "boolean",
           "default": true,
           "description": "Do nothing on startup if any terminal is already open. Prevents duplicate tabs when VSCode revives terminals after a reload."
+        },
+        "tmuxAutoReattach.liveTitles": {
+          "type": "boolean",
+          "default": false,
+          "description": "Let tmux drive each terminal tab's title (so it can show the running program) instead of using a fixed session-name label. Requires tmux set-titles, which titleCommand enables for you. tmux-only; leave off for zellij."
+        },
+        "tmuxAutoReattach.titleCommand": {
+          "type": "string",
+          "default": "tmux set -g set-titles on \\; set -g set-titles-string '#{session_name}: #{pane_current_command}'",
+          "description": "Only used when liveTitles is on. Run in each terminal (before attaching) to make tmux emit tab titles. Note set-titles is a global tmux option, so this affects all sessions on the server. Clear this if you set set-titles in ~/.tmux.conf yourself."
         }
       }
     }
