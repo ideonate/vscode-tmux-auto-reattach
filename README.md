@@ -102,8 +102,31 @@ Two gotchas:
   `tmux source-file ~/.tmux.conf`, but you must start a new session (or
   `tmux kill-server`) for the larger history to take effect — sessions this
   extension reattaches to keep whatever limit they had when first created.
-- With `mouse on`, click-drag selection goes to tmux instead of VSCode. Hold
-  **Shift** while selecting or scrolling to use VSCode's native behaviour.
+- With `mouse on`, mouse selection goes to tmux instead of VSCode. Click-drag
+  and double-click-to-select-a-word both get intercepted — a double-click
+  highlights the word, then tmux copies it, leaves copy-mode, and snaps back to
+  the bottom, so the selection appears to flash and vanish. To get VSCode's
+  native selection (and its clipboard) instead:
+  - **On macOS, hold Option (⌥)** while clicking/dragging/double-clicking, and
+    make sure `terminal.integrated.macOptionClickForcesSelection` is enabled
+    (it's the default, but worth checking — if it's off, Option does nothing).
+    Shift often works too, but for double-click word-select VSCode tends to read
+    Shift+click as "extend selection," so Option is more reliable.
+  - **Elsewhere, hold Shift** while selecting or scrolling.
+
+If you switch between selecting and wheel-scrolling a lot, bind a toggle so you
+can flip mouse mode off (native VSCode mouse) and on (tmux wheel scroll) on
+demand:
+
+    bind m set -g mouse \; display "mouse #{?mouse,on,off}"
+
+Then `prefix` + `m` (prefix is `Ctrl-b` by default, so **Ctrl-b** then **m**)
+flips it. Unlike the settings above this binding works in existing sessions —
+but you must load it first: it won't take effect until you reload the config
+with `tmux source-file ~/.tmux.conf`. Check it registered with
+`tmux list-keys -T prefix m`, and confirm the toggle with
+`tmux show-options -g mouse` before and after pressing it (the on-screen
+`mouse on`/`mouse off` flash is easy to miss if your status line is hidden).
 
 ## Cursor keys & backspace in tmux
 
