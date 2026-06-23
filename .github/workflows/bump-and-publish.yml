@@ -1,0 +1,76 @@
+name: Bump Version and Publish to VS Code Marketplace
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump_type:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+jobs:
+  bump-and-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Bump version
+        id: bump
+        run: |
+          NEW_VERSION=$(npm version ${{ inputs.bump_type }} --no-git-tag-version)
+          echo "new_version=${NEW_VERSION#v}" >> $GITHUB_OUTPUT
+
+      - name: Commit version bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          git commit -m "${{ steps.bump.outputs.new_version }}"
+          git push
+
+      - name: Package extension (.vsix)
+        run: npx --yes @vscode/vsce package --out vscode-tmux-auto-reattach.vsix
+
+      - name: Publish to VS Code Marketplace
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          if [ -z "$VSCE_PAT" ]; then
+            echo "VSCE_PAT secret not set — skipping Marketplace publish."
+            echo "To enable: create an Azure DevOps PAT with Marketplace > Manage scope and add it as repo secret VSCE_PAT."
+            exit 0
+          fi
+          npx --yes @vscode/vsce publish --packagePath vscode-tmux-auto-reattach.vsix --pat "$VSCE_PAT"
+
+      - name: Create GitHub release with .vsix asset
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.bump.outputs.new_version }}"
+          TAG="v${VERSION}"
+          git tag "$TAG"
+          git push origin "$TAG"
+          gh release create "$TAG" \
+            --title "$TAG" \
+            --notes "Automated release for v${VERSION}. Includes vscode-tmux-auto-reattach.vsix." \
+            vscode-tmux-auto-reattach.vsix

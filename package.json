@@ -1,0 +1,57 @@
+{
+  "name": "vscode-tmux-auto-reattach",
+  "displayName": "tmux Auto Reattach",
+  "description": "On window open, opens one integrated terminal per existing tmux (or zellij) session and attaches to it.",
+  "version": "0.0.1",
+  "publisher": "ideonate",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ideonate/vscode-tmux-auto-reattach.git"
+  },
+  "engines": { "vscode": "^1.75.0" },
+  "extensionKind": ["workspace"],
+  "categories": ["Other"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./extension.js",
+  "scripts": {
+    "package": "vsce package --out vscode-tmux-auto-reattach.vsix",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@vscode/vsce": "^2.22.0"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "tmuxAutoReattach.openAll",
+        "title": "tmux Auto Reattach: Open One Terminal Per Session"
+      }
+    ],
+    "configuration": {
+      "title": "tmux Auto Reattach",
+      "properties": {
+        "tmuxAutoReattach.runOnStartup": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically open a terminal per session when the window finishes loading."
+        },
+        "tmuxAutoReattach.listCommand": {
+          "type": "string",
+          "default": "tmux list-sessions -F \"#{session_name}\"",
+          "description": "Shell command (run on the host where the workspace lives) that prints one session name per line. For zellij use: zellij list-sessions -ns"
+        },
+        "tmuxAutoReattach.attachCommand": {
+          "type": "string",
+          "default": "tmux attach -t {session}",
+          "description": "Command run inside each new terminal. {session} is replaced with the session name. Add -d to kick other clients off the session: tmux attach -d -t {session}. For zellij: zellij attach {session}"
+        },
+        "tmuxAutoReattach.skipIfTerminalsOpen": {
+          "type": "boolean",
+          "default": true,
+          "description": "Do nothing on startup if any terminal is already open. Prevents duplicate tabs when VSCode revives terminals after a reload."
+        }
+      }
+    }
+  }
+}
