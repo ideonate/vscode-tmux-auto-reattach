@@ -2,7 +2,7 @@
   "name": "vscode-tmux-auto-reattach",
   "displayName": "tmux Auto Reattach",
   "description": "On window open, opens one integrated terminal per existing tmux (or zellij) session and attaches to it.",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "publisher": "ideonate",
   "license": "MIT",
   "repository": {
