@@ -68,6 +68,21 @@
           "type": "string",
           "default": "tmux set -g set-titles on \\; set -g set-titles-string '#{session_name}: #{pane_current_command}'",
           "description": "Only used when liveTitles is on. Run in each terminal (before attaching) to make tmux emit tab titles. Note set-titles is a global tmux option, so this affects all sessions on the server. Clear this if you set set-titles in ~/.tmux.conf yourself."
+        },
+        "tmuxAutoReattach.shellPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to a shell used to run the attach command directly, bypassing your default terminal profile. Set this if your default profile auto-launches tmux, otherwise the attach nests inside a fresh tmux. Example: /bin/sh or /bin/bash (use an absolute path on the host where the workspace lives). Leave empty to use the default profile (the original behaviour)."
+        },
+        "tmuxAutoReattach.shellArgs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "-c"
+          ],
+          "description": "Arguments passed to shellPath before the attach command. Only used when shellPath is set. Use [\"-l\", \"-c\"] for a login shell if tmux isn't on PATH otherwise."
         }
       }
     }

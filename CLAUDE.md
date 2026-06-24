@@ -31,7 +31,7 @@ Two source files, both small:
   already-open terminals by name. `activate()` registers the
   `tmuxAutoReattach.openAll` command and runs `openAll()` on startup unless
   disabled or terminals already exist.
-- [package.json](package.json) — manifest. Defines the command, the four
+- [package.json](package.json) — manifest. Defines the command, the
   `tmuxAutoReattach.*` settings, and `activationEvents: onStartupFinished`.
 
 ### Key design points
@@ -48,6 +48,14 @@ Two source files, both small:
   startup run against VSCode reviving terminals after a reload.
 - **Generality via config**: tmux vs zellij is purely a matter of the
   `listCommand` / `attachCommand` settings — there is no tmux-specific code.
+- **Nesting / `shellPath`**: by default `openAll()` uses `createTerminal()`
+  (the user's default terminal profile) and then `sendText`s the attach. If that
+  profile auto-launches tmux, the attach nests inside a fresh tmux. Setting
+  `shellPath` (+ `shellArgs`, default `["-c"]`) switches to
+  `createTerminal({ shellPath, shellArgs: [...shellArgs, cmd] })` so the attach
+  *is* the terminal's process, bypassing the profile. In that mode the
+  `liveTitles` `titleCommand` is chained ahead of the attach in one command
+  (`titleCommand; attach`) since there's no outer shell to `sendText` into.
 
 ## Naming convention
 

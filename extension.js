@@ -34,6 +34,8 @@ async function openAll() {
   const attachCommand = cfg.get('attachCommand');
   const liveTitles = cfg.get('liveTitles');
   const titleCommand = cfg.get('titleCommand');
+  const shellPath = cfg.get('shellPath');
+  const shellArgs = cfg.get('shellArgs');
 
   const sessions = await listSessions(listCommand);
   if (sessions.length === 0) {
@@ -54,20 +56,39 @@ async function openAll() {
     if (existing.has(name)) {
       continue;
     }
-    // With an explicit name VSCode pins the tab label and ignores title escape
-    // sequences. For live titles we omit the name so tmux's set-titles can win.
-    const term = liveTitles
-      ? vscode.window.createTerminal()
-      : vscode.window.createTerminal({ name });
-    if (liveTitles) {
-      openSessions.set(name, term);
-      // Run before attaching, while still at the outer shell, so we configure
-      // the tmux server rather than typing into whatever the pane is running.
-      if (titleCommand) {
+    const attach = attachCommand.replace(/\{session\}/g, name);
+
+    let term;
+    if (shellPath) {
+      // Run the attach as the terminal's own process instead of typing it into
+      // a shell from the default profile. If that profile auto-launches tmux,
+      // the typed-in attach would nest inside a fresh tmux; bypassing it lands
+      // the attach at a bare shell. (It also means a VSCode reload can't revive
+      // the tab as a tmux pane.) The titleCommand, normally sent while at the
+      // outer shell, is chained ahead of the attach in the same command.
+      const cmd = liveTitles && titleCommand ? `${titleCommand}; ${attach}` : attach;
+      // With an explicit name VSCode pins the tab label and ignores title escape
+      // sequences; for live titles we omit it so tmux's set-titles can win.
+      const opts = { shellPath, shellArgs: [...shellArgs, cmd] };
+      if (!liveTitles) {
+        opts.name = name;
+      }
+      term = vscode.window.createTerminal(opts);
+    } else {
+      term = liveTitles
+        ? vscode.window.createTerminal()
+        : vscode.window.createTerminal({ name });
+      if (liveTitles && titleCommand) {
+        // Run before attaching, while still at the outer shell, so we configure
+        // the tmux server rather than typing into whatever the pane is running.
         term.sendText(titleCommand, true);
       }
+      term.sendText(attach, true);
     }
-    term.sendText(attachCommand.replace(/\{session\}/g, name), true);
+
+    if (liveTitles) {
+      openSessions.set(name, term);
+    }
     last = term;
   }
   if (last) {

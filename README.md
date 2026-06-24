@@ -63,6 +63,13 @@ Command Palette -> "tmux Auto Reattach: Open One Terminal Per Session".
 - `tmuxAutoReattach.liveTitles` (default false) — see below.
 - `tmuxAutoReattach.titleCommand` — the tmux command `liveTitles` runs to turn
   titles on (see below).
+- `tmuxAutoReattach.shellPath` (default empty) — a shell used to run the attach
+  command directly, bypassing your default terminal profile. Set this if your
+  default profile auto-launches tmux, or attaches nest. See
+  [Nested tmux](#nested-tmux-when-your-default-profile-launches-tmux) below.
+- `tmuxAutoReattach.shellArgs` (default `["-c"]`) — args passed to `shellPath`
+  before the attach command. Use `["-l", "-c"]` for a login shell if `tmux`
+  isn't on `PATH` otherwise.
 
 ## Live tab titles (show the running program)
 
@@ -111,6 +118,47 @@ from and rejoin.
 
 Over Remote-SSH, set this in the Remote settings (the shell runs there) and make
 sure `tmux` is on `PATH` — use an absolute path like `/usr/bin/tmux` if not.
+
+**Heads-up:** making tmux your *default* profile is exactly the setup that
+causes nesting — see the next section.
+
+## Nested tmux (when your default profile launches tmux)
+
+If your **default** terminal profile auto-launches tmux (e.g. you set
+`defaultProfile` to a tmux profile as above), tmux can end up nested inside
+tmux. Two things trigger it:
+
+1. **VSCode terminal restore.** On a window reload VSCode revives the previous
+   terminal *tabs* but can't restore the dead processes, so it relaunches each
+   one with the **default profile** — which starts a fresh tmux. Worse, because
+   `skipIfTerminalsOpen` then sees those revived tabs, the extension skips its
+   real reattach entirely.
+2. **The extension's own terminals.** The extension opens a terminal (default
+   profile → tmux) and *then* types `tmux attach …` into it — which now runs
+   *inside* the tmux the profile just started.
+
+Two fixes; they're complementary:
+
+**A — stop VSCode reviving terminals.** This kills trigger 1 and lets the
+extension cleanly reopen one terminal per session on every reload:
+
+    "terminal.integrated.enablePersistentSessions": false
+
+(Or, to keep tabs but never relaunch their processes,
+`"terminal.integrated.persistentSessionReviveProcess": "never"`.)
+
+**B — make the extension immune to the default profile.** Point `shellPath` at a
+plain shell so the attach runs as the terminal's own process instead of being
+typed into a tmux-launching profile. This kills *both* triggers:
+
+    "tmuxAutoReattach.shellPath": "/bin/sh",
+    "tmuxAutoReattach.shellArgs": ["-c"]
+
+Use an absolute path on the host where the workspace lives (the Remote settings
+for Remote-SSH). If `tmux` isn't on `PATH` for a non-login shell, use
+`"shellArgs": ["-l", "-c"]`. One behaviour change: with `shellPath` set, the
+attach *is* the terminal's process, so detaching or killing the tmux client
+closes the tab (instead of dropping you at a leftover shell).
 
 ## Scrollback & mouse scrolling in tmux
 
