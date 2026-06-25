@@ -66,7 +66,7 @@ async function openAll() {
       // the attach at a bare shell. (It also means a VSCode reload can't revive
       // the tab as a tmux pane.) The titleCommand, normally sent while at the
       // outer shell, is chained ahead of the attach in the same command.
-      const cmd = liveTitles && titleCommand ? `${titleCommand}; ${attach}` : attach;
+      const cmd = liveTitles && titleCommand ? `${titleCommand}; exec ${attach}` : `exec ${attach}`;
       // With an explicit name VSCode pins the tab label and ignores title escape
       // sequences; for live titles we omit it so tmux's set-titles can win.
       const opts = { shellPath, shellArgs: [...shellArgs, cmd] };
